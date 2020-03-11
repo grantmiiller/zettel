@@ -3,6 +3,9 @@ My version of a dead simple zettel CLI.
 
 Works better when combined `vim` and [zettel-vim](https://github.com/grantmiiller/zettel.vim)
 
+## What is Zettel?
+Stands for [Zettelkasten](https://zettelkasten.de/)
+
 ## The ID system
 This version uses the bash `date` command with `%Y%m%d%H%M%S` as the format string.
 
