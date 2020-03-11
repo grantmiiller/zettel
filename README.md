@@ -1,6 +1,8 @@
 # Zettel CLI
 My version of a dead simple zettel CLI.
 
+WARNING: Requires [the silver searcher](https://github.com/ggreer/the_silver_searcher)
+
 Works better when combined `vim` and [zettel-vim](https://github.com/grantmiiller/zettel.vim)
 
 ## What is Zettel?
