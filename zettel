@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -e
+
+if [[ ! -z "${ZETTEL_DIR}" ]]; then
+  NOTE_DIR="$ZETTEL_DIR"
+else
+  NOTE_DIR="./"
+fi
+
+copy_string() {
+  if [ -x "$(command -v xclip)" ]; then
+    echo $1 | xclip -selection c
+  fi
+
+  if [ -x "$(command -v pbcopy)" ]; then
+    echo $1 | pbcopy
+  fi
+}
+
+ag_check() {
+  if [ ! -x "$(command -v ag )" ]; then
+    echo "You named to have silver search (ag) installed to run this command"
+    exit 1
+  fi
+}
+
+new_note() {
+  local id=$(date +"%Y%m%d%H%M%S")
+  local note_name
+  if [[ "$#" -gt 0 ]]; then
+    note_name="$NOTE_DIR/$id $@.md"
+  else
+    note_name="$NOTE_DIR/$id.md"
+  fi
+
+  touch "$note_name"
+
+  if [[ $COPY_ID_FLAG -eq 1 ]]; then
+    copy_string "$id"
+    echo $id
+  fi
+
+  if [[ $COPY_FILE_FLAG -eq 1 ]]; then
+    copy_string "$note_name"
+    echo $note_name
+  fi
+}
+
+find_file() {
+  ag_check
+  local id=$1
+  # local results=$(ag -G -g "$id") || true
+  local results=$(ag -rg "$id" $ZETTEL_DIR)
+
+  if [ ! $? -eq 0 ]; then
+    echo "No results were found"
+    exit 1
+  fi
+
+  if [[ $COPY_FILE_FLAG -eq 1 ]]; then
+    copy_string "$results"
+  fi
+
+  echo "$results"
+}
+
+find_tag() {
+  ag_check
+  local tag=$1
+  local results=$(ag -rl "#$tag" "$ZETTEL_DIR")
+
+  if [ ! $? -eq 0 ]; then
+    echo "No results were found"
+    exit 1
+  fi
+
+  if [[ $COPY_FILE_FLAG -eq 1 ]]; then
+    copy_string "$results"
+  fi
+  
+  echo "$results"
+}
+
+get_id() {
+  local id=$(echo "$1" | grep -Eo "[[:digit:]]{14}")
+
+  if [[ $COPY_ID_FLAG -eq 1 ]]; then
+    copy_string "$id"
+  fi
+
+  echo $id
+}
+
+usage() {
+  echo "Usage: [options] [command] [parameters]"
+  echo "Example: \`zettel -i new Hello World\`"
+  echo "===================================="
+  echo "Commands:"
+  echo "  new:  Creates a new note, parameters are added to note name."
+  echo "  find: Finds a note by name. Can only copy file path."
+  echo "  tag:  Searches notes for tag."
+  echo "  id:   Gets ID from filename, if it exists. Only copies file id."
+  echo "Options:"
+  echo "  -i: Copy note id after running command"
+  echo "  -f: Copy note location/path after running command"
+  exit 0
+}
+
+while getopts 'fi' flag; do
+  case "${flag}" in
+    f)
+      shift
+      COPY_FILE_FLAG=1
+      ;;
+    i) 
+      shift
+      COPY_ID_FLAG=1
+      ;;
+  esac
+done
+
+case "${1}" in
+  ("new")
+    shift
+    new_note $@
+    ;;
+  ("find")
+    shift
+    find_file $1
+    ;;
+  ("tag")
+    shift
+    find_tag $1
+    ;;
+  ("id")
+    shift
+    get_id $1
+    ;;
+  *)
+    usage
+    ;;
+esac
+
